@@ -6,7 +6,7 @@ metadata:
 spec:
   source:
     path: gitops/applications
-    repoURL: 'https://github.com/isa-manghi/progressive_delivery_masterclass'
+    repoURL: 'https://github.com/isa-manghi/progressive_delivery_masterclass.git'
     targetRevision: main
   destination:
     namespace: argocd

@@ -19,12 +19,22 @@ app.get ("/healthz", async(req, res) => {
  */
 
 app.get('/', async(req, res) => {
-
-  var body = "<html><title>Demo App</title><body><h1>";
-  body += 'Hello World!';
-  body += "</h1></body></html>";
-  res.send (body)
-})
+    const myFlag = await featureFlags.getBooleanValue('my-flag', false);
+    const slowFlag = await featureFlags.getBooleanValue('slowFlag', false);
+  
+    if (slowFlag){
+      await new Promise(r => setTimeout(r, 20000));
+    }
+  
+    var body = "<html><title>Demo App</title><body><h1>";
+    if (myFlag){
+      body += '+++ Hello World! +++ ';
+    } else {
+      body += 'Hello World!';
+    }
+    body += "</h1></body></html>";
+    res.send (body)
+  })
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
@@ -58,3 +68,30 @@ const sdk = new opentelemetry.NodeSDK({
   })  
 });
 sdk.start();
+
+
+/**
+ * OpenFeature relevant code
+ */
+
+const OpenFeature = require('@openfeature/js-sdk').OpenFeature;
+const FlagdProvider = require('@openfeature/flagd-provider').FlagdProvider;
+
+const openFeatureConf = {
+  HOST : process.env.FLAGD_HOST || 'localhost',
+  PORT : process.env.FLAGD_PORT || '8031'
+}
+console.log ("Connecting to flagD at %s:%s", openFeatureConf.HOST, openFeatureConf.PORT)
+
+/**
+ * OpenFeature init code
+ */
+
+OpenFeature.addHooks(new TracingHook(), new MetricsHook());
+
+OpenFeature.setProvider(new FlagdProvider({
+    host: openFeatureConf.HOST,
+    port: openFeatureConf.PORT
+}))
+
+const featureFlags = OpenFeature.getClient();
